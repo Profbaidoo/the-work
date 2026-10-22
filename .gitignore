@@ -1,0 +1,14 @@
+# Virtual Environment
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+*.log
