@@ -257,7 +257,7 @@ export const ExpensesFinancialReports: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. ECG Achimota District"
+                  placeholder="e.g. ECG District Office"
                   value={paidTo}
                   onChange={(e) => setPaidTo(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg"

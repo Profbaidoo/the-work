@@ -83,7 +83,7 @@ export const Dashboard: React.FC = () => {
             Welcome, {user?.full_name}!
           </h1>
           <p className="text-xs text-slate-300 mt-0.5">
-            Achimota Royal Basic Academy &bull; Term 2 Dashboard & Academic Overview
+            Charity Preparatory School &bull; Term 2 Dashboard & Academic Overview
           </p>
         </div>
 

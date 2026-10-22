@@ -75,9 +75,9 @@ def generate_report_card_pdf(school_info, student_info, term_info, academic_scor
     story = []
 
     # School Header
-    story.append(Paragraph(school_info.get("name", "ACHIMOTA ROYAL BASIC ACADEMY"), title_style))
+    story.append(Paragraph(school_info.get("name", "CHARITY PREPARATORY SCHOOL"), title_style))
     story.append(Paragraph(f"<i>&ldquo;{school_info.get('motto', 'Knowledge, Discipline, and Excellence')}&rdquo;</i>", motto_style))
-    story.append(Paragraph(f"{school_info.get('address', 'P.O. Box AC 48, Achimota - Accra, Ghana')} | Tel: {school_info.get('phone', '+233 24 412 3456')}", header_style))
+    story.append(Paragraph(f"{school_info.get('address', 'P.O. Box CP 120, Accra, Ghana')} | Tel: {school_info.get('phone', '+233 24 412 3456')}", header_style))
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A"), spaceBefore=2, spaceAfter=8))
     
@@ -261,7 +261,7 @@ def generate_payment_receipt_pdf(school_info, payment_info, student_info):
     val_style = ParagraphStyle("Val", fontName="Helvetica", fontSize=9, textColor=colors.black)
 
     story = []
-    story.append(Paragraph(school_info.get("name", "ACHIMOTA ROYAL BASIC ACADEMY"), title_style))
+    story.append(Paragraph(school_info.get("name", "CHARITY PREPARATORY SCHOOL"), title_style))
     story.append(Paragraph(f"{school_info.get('address', 'Accra, Ghana')} | Tel: {school_info.get('phone', '+233 24 412 3456')}", subtitle_style))
     story.append(Spacer(1, 8))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#0D9488"), spaceBefore=2, spaceAfter=8))

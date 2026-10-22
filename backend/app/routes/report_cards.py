@@ -197,9 +197,9 @@ def download_report_card_pdf(report_card_id):
     school = SchoolSetting.query.first()
 
     school_info = {
-        "name": school.school_name if school else "Achimota Royal Basic Academy",
+        "name": school.school_name if school else "Charity Preparatory School",
         "motto": school.school_motto if school else "Knowledge, Discipline, and Excellence",
-        "address": school.address if school else "P.O. Box AC 48, Achimota - Accra, Ghana",
+        "address": school.address if school else "P.O. Box CP 120, Accra, Ghana",
         "phone": school.phone if school else "+233 24 412 3456"
     }
 

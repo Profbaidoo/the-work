@@ -276,9 +276,9 @@ def promote_student(student_id):
 def download_biodata_pdf(student_id):
     student = Student.query.get_or_404(student_id)
     school = SchoolSetting.query.first()
-    school_name = school.school_name if school else "Achimota Royal Basic Academy"
+    school_name = school.school_name if school else "Charity Preparatory School"
     school_motto = school.school_motto if school else "Knowledge, Discipline, and Excellence"
-    school_address = school.address if school else "P.O. Box AC 48, Achimota - Accra, Ghana"
+    school_address = school.address if school else "P.O. Box CP 120, Accra, Ghana"
     school_phone = school.phone if school else "+233 24 412 3456"
 
     buffer = io.BytesIO()

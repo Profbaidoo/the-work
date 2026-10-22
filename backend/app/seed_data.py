@@ -121,14 +121,14 @@ def seed_database():
 
     # 4. School Settings
     school_setting = SchoolSetting(
-        school_name="Achimota Royal Basic Academy",
+        school_name="Charity Preparatory School",
         school_motto="Knowledge, Discipline, and Excellence",
-        school_code="ARBA-GH",
-        address="P.O. Box AC 48, Achimota - Accra, Ghana",
+        school_code="CPS-GH",
+        address="P.O. Box CP 120, Accra, Ghana",
         phone="+233 24 412 3456",
         alt_phone="+233 20 890 1234",
-        email="info@achimotabasic.edu.gh",
-        website="https://achimotabasic.edu.gh",
+        email="info@charitypreparatory.edu.gh",
+        website="https://charitypreparatory.edu.gh",
         currency="GHS",
         currency_symbol="GH₵",
         ca_weight_percentage=30.0,

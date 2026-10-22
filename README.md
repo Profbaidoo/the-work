@@ -1,5 +1,5 @@
 # Professional Basic School Management System (Ghana)
-**Achimota Royal Basic Academy Management Information System**
+**Charity Preparatory School Information System**
 
 A modern, secure, full-stack School Management System designed specifically for basic schools in Ghana covering **Nursery 1–2**, **Kindergarten (KG 1–2)**, **Primary 1–6**, and **Junior High School (JHS 1–3)**.
 

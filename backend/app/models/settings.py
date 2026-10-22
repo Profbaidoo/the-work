@@ -4,15 +4,15 @@ class SchoolSetting(BaseModel):
     __tablename__ = "school_settings"
 
     id = db.Column(db.Integer, primary_key=True)
-    school_name = db.Column(db.String(200), default="Achimota Royal Basic Academy", nullable=False)
+    school_name = db.Column(db.String(200), default="Charity Preparatory School", nullable=False)
     school_motto = db.Column(db.String(255), default="Knowledge, Discipline, and Excellence", nullable=False)
-    school_code = db.Column(db.String(50), default="ARBA-GH", nullable=False)
+    school_code = db.Column(db.String(50), default="CPS-GH", nullable=False)
     logo_url = db.Column(db.String(255), nullable=True)
-    address = db.Column(db.String(255), default="P.O. Box AC 48, Achimota - Accra, Ghana", nullable=False)
+    address = db.Column(db.String(255), default="P.O. Box CP 120, Accra, Ghana", nullable=False)
     phone = db.Column(db.String(50), default="+233 24 412 3456", nullable=False)
     alt_phone = db.Column(db.String(50), default="+233 20 890 1234", nullable=True)
-    email = db.Column(db.String(120), default="info@achimotabasic.edu.gh", nullable=False)
-    website = db.Column(db.String(150), default="https://achimotabasic.edu.gh", nullable=True)
+    email = db.Column(db.String(120), default="info@charitypreparatory.edu.gh", nullable=False)
+    website = db.Column(db.String(150), default="https://charitypreparatory.edu.gh", nullable=True)
 
     currency = db.Column(db.String(10), default="GHS", nullable=False)
     currency_symbol = db.Column(db.String(10), default="GH₵", nullable=False)

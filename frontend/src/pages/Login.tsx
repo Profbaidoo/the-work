@@ -55,7 +55,7 @@ export const Login: React.FC = () => {
           </div>
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-          Achimota Royal Basic Academy
+          Charity Preparatory School
         </h2>
         <p className="mt-1 text-xs sm:text-sm text-slate-400">
           Ghanaian Basic School Information & Management Portal
@@ -154,7 +154,7 @@ export const Login: React.FC = () => {
         </div>
 
         <p className="text-center text-xs text-slate-500 mt-4">
-          Achimota Royal Basic Academy &bull; Accra, Ghana &bull; Academic Year 2025/2026
+          Charity Preparatory School &bull; Accra, Ghana &bull; Academic Year 2025/2026
         </p>
       </div>
 
@@ -172,7 +172,7 @@ export const Login: React.FC = () => {
             <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-700 border border-slate-200">
               <p><b>ICT Office:</b> Administration Block, Room 102</p>
               <p><b>Support Hotline:</b> +233 24 412 3456</p>
-              <p><b>Email:</b> support@achimotabasic.edu.gh</p>
+              <p><b>Email:</b> support@charitypreparatory.edu.gh</p>
             </div>
             <button
               onClick={() => setShowForgotModal(false)}

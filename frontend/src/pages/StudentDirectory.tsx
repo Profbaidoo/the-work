@@ -284,7 +284,7 @@ export const StudentDirectory: React.FC = () => {
         </div>
         <div className="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
           <span>Showing {students.length} students</span>
-          <span>Achimota Royal Basic Academy Database</span>
+          <span>Charity Preparatory School Database</span>
         </div>
       </div>
 

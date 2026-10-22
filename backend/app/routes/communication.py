@@ -119,7 +119,7 @@ def send_external_message():
     channel = data.get("channel", "SMS").upper()
     recipient = data.get("recipient", "").strip()
     message = data.get("message", "").strip()
-    subject = data.get("subject", "Notice from Achimota Royal Basic Academy")
+    subject = data.get("subject", "Notice from Charity Preparatory School")
 
     setting = SchoolSetting.query.first()
     is_configured = False

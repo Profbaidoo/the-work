@@ -17,7 +17,7 @@ export const AnnouncementsNotifications: React.FC = () => {
 
   // External SMS dispatch test
   const [smsRecipient, setSmsRecipient] = useState<string>('+233240000000');
-  const [smsMessage, setSmsMessage] = useState<string>('Dear parent, this is an official notice from Achimota Royal Basic Academy.');
+  const [smsMessage, setSmsMessage] = useState<string>('Dear parent, this is an official notice from Charity Preparatory School.');
   const [dispatchResult, setDispatchResult] = useState<any>(null);
   const [isSending, setIsSending] = useState<boolean>(false);
 

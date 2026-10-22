@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
             <div>
-              <h1 className="font-bold text-sm tracking-tight text-white leading-tight">ACHIMOTA ROYAL</h1>
+              <h1 className="font-bold text-sm tracking-tight text-white leading-tight">CHARITY PREPARATORY</h1>
               <p className="text-[11px] font-medium text-teal-400 uppercase tracking-wider">Basic School System</p>
             </div>
           </div>

@@ -38,10 +38,10 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
     
     # School Defaults (Ghanaian context)
-    DEFAULT_SCHOOL_NAME = os.getenv("SCHOOL_NAME", "Achimota Royal Basic Academy")
+    DEFAULT_SCHOOL_NAME = os.getenv("SCHOOL_NAME", "Charity Preparatory School")
     DEFAULT_SCHOOL_MOTTO = os.getenv("SCHOOL_MOTTO", "Knowledge, Discipline, and Excellence")
-    DEFAULT_SCHOOL_ADDRESS = os.getenv("SCHOOL_ADDRESS", "P.O. Box AC 48, Achimota - Accra, Ghana")
+    DEFAULT_SCHOOL_ADDRESS = os.getenv("SCHOOL_ADDRESS", "P.O. Box CP 120, Accra, Ghana")
     DEFAULT_SCHOOL_PHONE = os.getenv("SCHOOL_PHONE", "+233 24 412 3456")
-    DEFAULT_SCHOOL_EMAIL = os.getenv("SCHOOL_EMAIL", "info@achimotabasic.edu.gh")
+    DEFAULT_SCHOOL_EMAIL = os.getenv("SCHOOL_EMAIL", "info@charitypreparatory.edu.gh")
     DEFAULT_CURRENCY = "GHS"
     DEFAULT_CURRENCY_SYMBOL = "GH₵"
