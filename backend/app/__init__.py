@@ -44,6 +44,35 @@ def create_app(config_class=Config):
     app.register_blueprint(reports_bp)
     app.register_blueprint(settings_bp)
 
+    @app.route("/", methods=["GET"])
+    def root():
+        """Auto-redirect from backend port 5000 to the React frontend portal on port 3000"""
+        from flask import redirect
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="0; url=http://localhost:3000" />
+            <title>Charity Preparatory School</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; background: #0f172a; color: white; margin: 0; text-align: center; }
+                .card { background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+                h2 { color: #f59e0b; margin-bottom: 8px; }
+                p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+                a { display: inline-block; background: #f59e0b; color: #0f172a; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 8px; transition: background 0.2s; }
+                a:hover { background: #fbbf24; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h2>Charity Preparatory School</h2>
+                <p>Redirecting to the web portal on port 3000...</p>
+                <a href="http://localhost:3000">Open School Portal (http://localhost:3000)</a>
+            </div>
+        </body>
+        </html>
+        """, 200
+
     @app.route("/api/health", methods=["GET"])
     def health_check():
         return jsonify({
