@@ -7,6 +7,7 @@ import { Navbar } from './components/Navbar';
 
 // Pages
 import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { StudentRegistration } from './pages/StudentRegistration';
 import { StudentDirectory } from './pages/StudentDirectory';
@@ -56,6 +57,8 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/signup" element={<Register />} />
 
           {/* Protected Application Routes */}
           <Route

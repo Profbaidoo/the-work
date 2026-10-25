@@ -279,7 +279,7 @@ def download_biodata_pdf(student_id):
     school_name = school.school_name if school else "Charity Preparatory School"
     school_motto = school.school_motto if school else "Knowledge, Discipline, and Excellence"
     school_address = school.address if school else "P.O. Box CP 120, Accra, Ghana"
-    school_phone = school.phone if school else "+233 24 412 3456"
+    school_phone = school.phone if school else "+233 256331492"
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)

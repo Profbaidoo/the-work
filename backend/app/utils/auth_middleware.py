@@ -28,16 +28,52 @@ def role_required(*allowed_roles):
             if not user or not user.is_active:
                 return jsonify({"error": "User account inactive or not found"}), 403
 
-            role_name = user.role.name if user.role else ""
-            if role_name == "super_admin":
+            if user.has_role("super_admin"):
                 return fn(*args, **kwargs)
 
-            if role_name not in allowed_roles:
+            if not user.has_role(*allowed_roles):
+                role_name = user.role.name if user.role else ""
                 return jsonify({
                     "error": "Forbidden: You do not have permission to perform this action",
                     "required_roles": allowed_roles,
                     "current_role": role_name
                 }), 403
+
+            return fn(*args, **kwargs)
+        return decorator
+    return wrapper
+
+def dual_role_required(*allowed_roles):
+    """Alias for dual-role / multi-role check."""
+    return role_required(*allowed_roles)
+
+def row_level_class_authorized():
+    """
+    Row-Level Authorization: Ensures a teacher can only modify attendance
+    or assessments for classes they are specifically assigned to.
+    Super admin and headteachers have school-wide row access.
+    """
+    from flask import request
+    from backend.app.models.academics import TeacherClassAssignment
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            user = get_current_user()
+            if not user or not user.is_active:
+                return jsonify({"error": "Unauthorized"}), 401
+
+            if user.has_role("super_admin", "headteacher"):
+                return fn(*args, **kwargs)
+
+            # Check class_id from query args, body JSON, or route param
+            class_id = request.args.get("class_id") or (request.get_json(silent=True) or {}).get("class_id") or kwargs.get("class_id")
+            if class_id and user.has_role("teacher") and user.teacher_profile:
+                assignment = TeacherClassAssignment.query.filter_by(
+                    teacher_id=user.teacher_profile.id,
+                    class_id=int(class_id)
+                ).first()
+                if not assignment:
+                    return jsonify({"error": "Row-level authorization failed: You are not assigned to this class register."}), 403
 
             return fn(*args, **kwargs)
         return decorator

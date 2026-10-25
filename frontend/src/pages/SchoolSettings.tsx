@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, CheckCircle2, ShieldCheck, Building, Sliders, Calendar } from 'lucide-react';
+import { Settings, Save, CheckCircle2, ShieldCheck, Building, Sliders, Calendar, Database, Download, RotateCcw, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import { SchoolProfile, AcademicYear, Term } from '../types';
 
@@ -10,22 +10,57 @@ export const SchoolSettings: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [successMsg, setSuccessMsg] = useState<string>('');
 
+  // Backup states
+  const [backups, setBackups] = useState<any[]>([]);
+  const [isBackingUp, setIsBackingUp] = useState<boolean>(false);
+  const [backupMsg, setBackupMsg] = useState<string>('');
+
   useEffect(() => {
     fetchSettings();
   }, []);
 
   const fetchSettings = async () => {
     try {
-      const [pRes, yRes, tRes] = await Promise.all([
+      const [pRes, yRes, tRes, bRes] = await Promise.all([
         api.get('/settings/school-profile'),
         api.get('/academics/academic-years'),
-        api.get('/academics/terms')
+        api.get('/academics/terms'),
+        api.get('/settings/backups')
       ]);
       setProfile(pRes.data.school);
       setYears(yRes.data.academic_years || []);
       setTerms(tRes.data.terms || []);
+      setBackups(bRes.data.backups || []);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    setIsBackingUp(true);
+    setBackupMsg('');
+    try {
+      const res = await api.post('/settings/backups/create');
+      setBackupMsg(`Backup created successfully: ${res.data.backup?.filename}`);
+      const bRes = await api.get('/settings/backups');
+      setBackups(bRes.data.backups || []);
+    } catch (err: any) {
+      setBackupMsg(err.response?.data?.error || 'Failed to create backup.');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestoreBackup = async (filename: string) => {
+    if (!window.confirm(`Are you sure you want to restore database snapshot ${filename}? This will revert recent data to this snapshot.`)) {
+      return;
+    }
+    try {
+      await api.post(`/settings/backups/${filename}/restore`);
+      alert(`Database successfully restored from ${filename}. The page will now refresh.`);
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to restore database.');
     }
   };
 
@@ -262,6 +297,75 @@ export const SchoolSettings: React.FC = () => {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Section 4: Database Backup & Recovery Snapshots */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center space-x-2">
+              <Database className="w-4 h-4 text-emerald-600" />
+              <span>4. Database Backups & Cryptographic Snapshots</span>
+            </h2>
+            <button
+              type="button"
+              onClick={handleCreateBackup}
+              disabled={isBackingUp}
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition flex items-center space-x-1.5 disabled:opacity-50"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>{isBackingUp ? 'Creating Snapshot...' : 'Create New Backup Snapshot'}</span>
+            </button>
+          </div>
+
+          {backupMsg && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold text-emerald-800">
+              {backupMsg}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500">
+              Backups are compressed with GZIP and validated using SHA-256 cryptographic checksums. You can download or restore snapshots at any time.
+            </p>
+
+            {backups.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                No backup snapshots found. Click &quot;Create New Backup Snapshot&quot; to generate your first backup.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200 text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Backup Archive</th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Compressed Size</th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Created Date</th>
+                      <th className="px-4 py-2 text-right font-bold text-slate-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {backups.map((b, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/60">
+                        <td className="px-4 py-2.5 font-mono text-slate-900 font-semibold">{b.filename}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{b.size_kb} KB</td>
+                        <td className="px-4 py-2.5 text-slate-500">{b.modified_at}</td>
+                        <td className="px-4 py-2.5 text-right space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreBackup(b.filename)}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 font-bold text-[11px]"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Restore</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </form>

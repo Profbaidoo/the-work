@@ -262,7 +262,7 @@ def download_payment_receipt(payment_id):
     school_info = {
         "name": school.school_name if school else "Charity Preparatory School",
         "address": school.address if school else "P.O. Box CP 120, Accra, Ghana",
-        "phone": school.phone if school else "+233 24 412 3456"
+        "phone": school.phone if school else "+233 256331492"
     }
 
     payment_info = {

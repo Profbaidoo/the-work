@@ -1,6 +1,9 @@
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+import json
+import secrets
+import hashlib
 from backend.app.models.base import db, BaseModel
+from backend.app.utils.security import generate_salt, hash_salted_peppered_password, verify_salted_peppered_password
 
 # Association table for Role <-> Permission
 role_permissions = db.Table(
@@ -17,7 +20,7 @@ class Role(BaseModel):
     display_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(255), nullable=True)
 
-    users = db.relationship("User", back_populates="role", lazy="dynamic")
+    users = db.relationship("User", back_populates="role", lazy="dynamic", foreign_keys="User.role_id")
     permissions = db.relationship("Permission", secondary=role_permissions, backref=db.backref("roles", lazy="dynamic"))
 
     def to_dict(self):
@@ -42,14 +45,24 @@ class User(BaseModel):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    salt = db.Column(db.String(64), nullable=True) # Cryptographic per-user salt
     full_name = db.Column(db.String(150), nullable=False)
     phone = db.Column(db.String(30), nullable=True)
     avatar_url = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     last_login = db.Column(db.DateTime, nullable=True)
 
+    # Dual-Role Authorization
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
-    role = db.relationship("Role", back_populates="users")
+    secondary_role_id = db.Column(db.Integer, db.ForeignKey("roles.id", ondelete="SET NULL"), nullable=True)
+
+    role = db.relationship("Role", foreign_keys=[role_id], back_populates="users")
+    secondary_role = db.relationship("Role", foreign_keys=[secondary_role_id])
+
+    # Two-Factor Authentication (2FA) with Phone TOTP
+    two_factor_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    two_factor_secret = db.Column(db.String(64), nullable=True)
+    backup_codes = db.Column(db.Text, nullable=True)
 
     # Linked profiles
     teacher_profile = db.relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -58,23 +71,57 @@ class User(BaseModel):
     staff_profile = db.relationship("Staff", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.salt = generate_salt(16)
+        self.password_hash = hash_salted_peppered_password(password, self.salt)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        return verify_salted_peppered_password(password, self.salt, self.password_hash)
+
+    def generate_backup_codes(self):
+        """Generates 6 single-use recovery codes."""
+        raw_codes = [secrets.token_hex(4).upper() for _ in range(6)]
+        hashed = [hashlib.sha256(c.encode()).hexdigest() for c in raw_codes]
+        self.backup_codes = json.dumps(hashed)
+        return raw_codes
+
+    def verify_backup_code(self, code):
+        if not self.backup_codes or not code:
+            return False
+        hashed_input = hashlib.sha256(code.strip().upper().encode()).hexdigest()
+        codes = json.loads(self.backup_codes)
+        if hashed_input in codes:
+            codes.remove(hashed_input)
+            self.backup_codes = json.dumps(codes)
+            db.session.commit()
+            return True
+        return False
+
+    def has_role(self, *role_names):
+        """Dual-role authorization: matches primary or secondary role."""
+        primary = self.role.name if self.role else None
+        secondary = self.secondary_role.name if self.secondary_role else None
+        return any(r in (primary, secondary) for r in role_names)
 
     def has_permission(self, permission_name):
         if not self.role:
             return False
-        if self.role.name == "super_admin":
+        if self.has_role("super_admin"):
             return True
-        return any(p.name == permission_name for p in self.role.permissions)
+        primary_perms = [p.name for p in self.role.permissions] if self.role else []
+        secondary_perms = [p.name for p in self.secondary_role.permissions] if self.secondary_role else []
+        return permission_name in primary_perms or permission_name in secondary_perms
 
     def to_dict(self):
         data = super().to_dict()
         data.pop("password_hash", None)
+        data.pop("salt", None)
+        data.pop("two_factor_secret", None)
+        data.pop("backup_codes", None)
         data["role_name"] = self.role.name if self.role else None
         data["role_display_name"] = self.role.display_name if self.role else None
+        data["secondary_role_name"] = self.secondary_role.name if self.secondary_role else None
+        data["secondary_role_display_name"] = self.secondary_role.display_name if self.secondary_role else None
+        data["two_factor_enabled"] = self.two_factor_enabled
         data["permissions"] = [p.name for p in self.role.permissions] if self.role else []
         return data
 

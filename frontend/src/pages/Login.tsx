@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Lock, Mail, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { GraduationCap, Lock, Mail, ArrowRight, ShieldCheck, HelpCircle, Smartphone, QrCode, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, verify2FA } = useAuth();
   const navigate = useNavigate();
 
   const [identifier, setIdentifier] = useState<string>('admin@school.edu.gh');
@@ -13,17 +14,48 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showForgotModal, setShowForgotModal] = useState<boolean>(false);
 
+  // 2FA / QR Modal States
+  const [show2FAModal, setShow2FAModal] = useState<boolean>(false);
+  const [tempToken, setTempToken] = useState<string>('');
+  const [otpCode, setOtpCode] = useState<string>('');
+  const [otpError, setOtpError] = useState<string>('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
+  const [qrImageUrl, setQrImageUrl] = useState<string>('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
-      await login(identifier, password);
-      navigate('/');
+      const result = await login(identifier, password);
+      if (result && result.two_factor_required) {
+        setTempToken(result.temp_token);
+        // Setup QR code preview for user
+        const otpauthUri = encodeURIComponent(`otpauth://totp/Charity%20Preparatory%20School:${identifier}?secret=JBSWY3DPEHPK3PXP&issuer=Charity%20Preparatory%20School`);
+        setQrImageUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${otpauthUri}`);
+        setShow2FAModal(true);
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+    setIsVerifyingOtp(true);
+    try {
+      await verify2FA(tempToken, otpCode);
+      setShow2FAModal(false);
+      navigate('/');
+    } catch (err: any) {
+      setOtpError(err.response?.data?.error || 'Invalid 6-digit code or backup code.');
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -128,8 +160,19 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
+          {/* New User Registration Link */}
+          <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+            <Link
+              to="/register"
+              className="inline-flex items-center space-x-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 transition"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>New user, parent, or student? Register / Sign Up</span>
+            </Link>
+          </div>
+
           {/* Quick Demo Login Preset Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-5 pt-5 border-t border-slate-200">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wide flex items-center space-x-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
@@ -158,6 +201,69 @@ export const Login: React.FC = () => {
         </p>
       </div>
 
+      {/* 2FA Mobile QR Code & OTP Modal */}
+      {show2FAModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center">
+            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3">
+              <Smartphone className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900">Phone Authentication (2FA)</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Scan this QR code with <b>Google Authenticator</b> or your phone camera to get your 6-digit code:
+            </p>
+
+            <div className="my-3 p-3 bg-slate-50 rounded-xl border border-slate-200 inline-block">
+              <img
+                src={qrImageUrl}
+                alt="2FA QR Code"
+                className="w-40 h-40 mx-auto rounded-lg shadow-sm"
+              />
+            </div>
+
+            {otpError && (
+              <div className="mb-3 p-2 rounded-lg bg-red-50 text-red-700 text-xs font-semibold">
+                {otpError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerify2FA} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Enter 6-Digit Code from Phone:
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  autoFocus
+                  placeholder="000000"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full text-center tracking-widest text-2xl font-mono font-bold py-2 border-2 border-amber-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isVerifyingOtp || otpCode.length !== 6}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold rounded-lg text-xs hover:from-amber-600 hover:to-amber-700 transition disabled:opacity-50"
+              >
+                {isVerifyingOtp ? 'Verifying...' : 'Verify & Log In'}
+              </button>
+            </form>
+
+            <button
+              onClick={() => setShow2FAModal(false)}
+              className="mt-3 text-xs text-slate-400 hover:text-slate-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Password Recovery Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
@@ -171,7 +277,7 @@ export const Login: React.FC = () => {
             </p>
             <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-700 border border-slate-200">
               <p><b>ICT Office:</b> Administration Block, Room 102</p>
-              <p><b>Support Hotline:</b> +233 24 412 3456</p>
+              <p><b>Support Hotline:</b> +233 256331492</p>
               <p><b>Email:</b> support@charitypreparatory.edu.gh</p>
             </div>
             <button

@@ -6,7 +6,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (identifier: string, password: string) => Promise<User>;
+  login: (identifier: string, password: string) => Promise<any>;
+  verify2FA: (tempToken: string, code: string) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   switchDemoRole: (identifier: string, password: string) => Promise<void>;
@@ -41,8 +42,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (identifier: string, password: string): Promise<User> => {
+  const login = async (identifier: string, password: string): Promise<any> => {
     const res = await api.post('/auth/login', { identifier, password });
+    if (res.data.two_factor_required) {
+      return res.data;
+    }
+    const { token: newToken, user: userData } = res.data;
+    setToken(newToken);
+    setUser(userData);
+    localStorage.setItem('school_token', newToken);
+    localStorage.setItem('school_user', JSON.stringify(userData));
+    return { user: userData, two_factor_required: false };
+  };
+
+  const verify2FA = async (tempToken: string, code: string): Promise<User> => {
+    const res = await api.post('/auth/login/2fa-verify', { code }, {
+      headers: { Authorization: `Bearer ${tempToken}` }
+    });
     const { token: newToken, user: userData } = res.data;
     setToken(newToken);
     setUser(userData);
@@ -68,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, refreshUser, switchDemoRole }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, verify2FA, logout, refreshUser, switchDemoRole }}>
       {children}
     </AuthContext.Provider>
   );

@@ -9,7 +9,7 @@ class SchoolSetting(BaseModel):
     school_code = db.Column(db.String(50), default="CPS-GH", nullable=False)
     logo_url = db.Column(db.String(255), nullable=True)
     address = db.Column(db.String(255), default="P.O. Box CP 120, Accra, Ghana", nullable=False)
-    phone = db.Column(db.String(50), default="+233 24 412 3456", nullable=False)
+    phone = db.Column(db.String(50), default="+233 256331492", nullable=False)
     alt_phone = db.Column(db.String(50), default="+233 20 890 1234", nullable=True)
     email = db.Column(db.String(120), default="info@charitypreparatory.edu.gh", nullable=False)
     website = db.Column(db.String(150), default="https://charitypreparatory.edu.gh", nullable=True)

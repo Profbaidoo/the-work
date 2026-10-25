@@ -41,7 +41,7 @@ class Config:
     DEFAULT_SCHOOL_NAME = os.getenv("SCHOOL_NAME", "Charity Preparatory School")
     DEFAULT_SCHOOL_MOTTO = os.getenv("SCHOOL_MOTTO", "Knowledge, Discipline, and Excellence")
     DEFAULT_SCHOOL_ADDRESS = os.getenv("SCHOOL_ADDRESS", "P.O. Box CP 120, Accra, Ghana")
-    DEFAULT_SCHOOL_PHONE = os.getenv("SCHOOL_PHONE", "+233 24 412 3456")
+    DEFAULT_SCHOOL_PHONE = os.getenv("SCHOOL_PHONE", "+233 256331492")
     DEFAULT_SCHOOL_EMAIL = os.getenv("SCHOOL_EMAIL", "info@charitypreparatory.edu.gh")
     DEFAULT_CURRENCY = "GHS"
     DEFAULT_CURRENCY_SYMBOL = "GH₵"

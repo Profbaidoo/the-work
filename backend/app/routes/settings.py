@@ -107,39 +107,60 @@ def toggle_user_status(user_id):
 
     return jsonify({"message": f"User account has been {status_str}", "is_active": user.is_active}), 200
 
-# Database Backup Procedure
+# Database Backup & Restore Procedures
+from backend.app.utils.backup_manager import (
+    create_database_backup,
+    list_database_backups,
+    restore_database_backup,
+    BACKUP_DIR
+)
+
+@settings_bp.route("/backups", methods=["GET"])
+@jwt_required()
+@role_required("super_admin")
+def get_backups():
+    return jsonify({"backups": list_database_backups()}), 200
+
+@settings_bp.route("/backups/create", methods=["POST"])
+@jwt_required()
+@role_required("super_admin")
+def make_backup():
+    current_user = get_current_user()
+    info = create_database_backup()
+    log_audit_action(current_user.id, "DATABASE_BACKUP", "SETTINGS", f"Created database backup {info['filename']}")
+    return jsonify({"message": "Database backup generated successfully.", "backup": info}), 201
+
+@settings_bp.route("/backups/<filename>/download", methods=["GET"])
+@jwt_required()
+@role_required("super_admin")
+def download_backup_file(filename):
+    safe_path = os.path.join(BACKUP_DIR, os.path.basename(filename))
+    if not os.path.exists(safe_path):
+        return jsonify({"error": "Backup file not found"}), 404
+    return send_file(safe_path, as_attachment=True, download_name=filename)
+
+@settings_bp.route("/backups/<filename>/restore", methods=["POST"])
+@jwt_required()
+@role_required("super_admin")
+def restore_backup_endpoint(filename):
+    current_user = get_current_user()
+    try:
+        restore_database_backup(filename)
+        log_audit_action(current_user.id, "DATABASE_RESTORE", "SETTINGS", f"Restored database from {filename}")
+        return jsonify({"message": f"Database successfully restored from {filename}"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @settings_bp.route("/backup-database", methods=["POST"])
 @jwt_required()
 @role_required("super_admin")
 def backup_database():
-    """
-    Creates an authenticated administrative snapshot of the database.
-    Supports SQLite database copy or MySQL dump guidance.
-    """
     current_user = get_current_user()
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
-
-    if "sqlite" in db_uri:
-        source_path = db_uri.replace("sqlite:///", "")
-        backup_dir = os.path.join(current_app.config["BASE_DIR"], "backups")
-        os.makedirs(backup_dir, exist_ok=True)
-        backup_file = os.path.join(backup_dir, f"school_backup_{timestamp}.db")
-        if os.path.exists(source_path):
-            shutil.copy2(source_path, backup_file)
-            log_audit_action(current_user.id, "DATABASE_BACKUP", "SYSTEM", f"Created SQLite database backup {os.path.basename(backup_file)}")
-            return jsonify({
-                "message": "Database backup generated successfully",
-                "filename": os.path.basename(backup_file),
-                "timestamp": timestamp,
-                "size_bytes": os.path.getsize(backup_file)
-            }), 200
-        else:
-            return jsonify({"error": "Source database file not found"}), 404
-    else:
-        log_audit_action(current_user.id, "DATABASE_BACKUP", "SYSTEM", f"Initiated MySQL backup command at {timestamp}")
-        return jsonify({
-            "message": "MySQL backup initiated. Scheduled dump stored in secure storage.",
-            "timestamp": timestamp,
-            "engine": "MySQL 8.0"
-        }), 200
+    info = create_database_backup()
+    log_audit_action(current_user.id, "DATABASE_BACKUP", "SYSTEM", f"Created SQLite database backup {info['filename']}")
+    return jsonify({
+        "message": "Database backup generated successfully",
+        "filename": info["filename"],
+        "checksum": info["checksum_sha256"],
+        "size_kb": info["size_kb"]
+    }), 200
