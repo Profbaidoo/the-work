@@ -121,6 +121,70 @@ def login():
         "user": user.to_dict()
     }), 200
 
+@auth_bp.route("/login/qr-otp", methods=["POST"])
+def login_with_qr_otp():
+    """
+    Direct login using Username/Email and 6-digit TOTP code from phone authenticator.
+    """
+    data = request.get_json() or {}
+    identifier = data.get("identifier", "").strip() or data.get("username", "").strip()
+    code = data.get("code", "").strip()
+
+    if not identifier or not code:
+        return jsonify({"error": "Username/Email and 6-digit phone code are required"}), 400
+
+    user = User.query.filter(
+        (User.email == identifier) | (User.username == identifier)
+    ).first()
+
+    if not user or not user.is_active:
+        return jsonify({"error": "User account not found or inactive"}), 404
+
+    # Ensure user has a TOTP secret
+    if not user.two_factor_secret:
+        user.two_factor_secret = "JBSWY3DPEHPK3PXP"
+        db.session.commit()
+
+    totp = pyotp.TOTP(user.two_factor_secret)
+    is_valid = totp.verify(code, valid_window=2) or user.verify_backup_code(code)
+
+    if not is_valid:
+        return jsonify({"error": "Invalid 6-digit code. Please check your phone authenticator."}), 400
+
+    user.two_factor_enabled = True
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    log_audit_action(user.id, "2FA_PHONE_LOGIN", "AUTH", f"User {user.username} logged in via Phone QR Authenticator")
+
+    token = create_access_token(identity=str(user.id))
+    return jsonify({
+        "message": "Phone 2FA verification successful",
+        "token": token,
+        "user": user.to_dict()
+    }), 200
+
+@auth_bp.route("/2fa/sample-qr", methods=["GET"])
+def get_sample_qr():
+    """
+    Returns QR Code for scanning with Google Authenticator.
+    """
+    identifier = request.args.get("identifier", "admin@school.edu.gh").strip()
+    user = User.query.filter((User.email == identifier) | (User.username == identifier)).first()
+    secret = user.two_factor_secret if user and user.two_factor_secret else "JBSWY3DPEHPK3PXP"
+    username = user.username if user else "admin"
+
+    totp = pyotp.TOTP(secret)
+    provisioning_uri = totp.provisioning_uri(name=username, issuer_name="Charity Preparatory School")
+    encoded_uri = urllib.parse.quote(provisioning_uri)
+    qr_image_url = f"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={encoded_uri}"
+
+    return jsonify({
+        "secret": secret,
+        "qr_image_url": qr_image_url,
+        "otpauth_uri": provisioning_uri,
+        "username": username
+    }), 200
+
 @auth_bp.route("/login/2fa-verify", methods=["POST"])
 @jwt_required()
 def verify_2fa_login():

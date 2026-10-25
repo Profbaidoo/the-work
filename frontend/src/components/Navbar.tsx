@@ -8,6 +8,9 @@ import {
   UserCheck,
   CheckCircle2,
   Calendar,
+  QrCode,
+  Smartphone,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -26,6 +29,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   const [showNotifMenu, setShowNotifMenu] = useState<boolean>(false);
   const [showRoleMenu, setShowRoleMenu] = useState<boolean>(false);
   const [showUserMenu, setShowUserMenu] = useState<boolean>(false);
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const [qrData, setQrData] = useState<any>(null);
+
+  const openQrModal = async () => {
+    setShowQrModal(true);
+    try {
+      const res = await api.get('/auth/2fa/qr-setup');
+      setQrData(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     fetchNotifications();
@@ -91,6 +106,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
       {/* Right Controls: Role Switcher, Notification Bell, User Menu */}
       <div className="flex items-center space-x-3">
+        {/* 2FA Phone QR Code Scanner Button */}
+        <button
+          type="button"
+          onClick={openQrModal}
+          className="flex items-center space-x-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition shadow-2xs"
+          title="Scan QR Code with Google Authenticator on your phone"
+        >
+          <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="hidden sm:inline">📱 2FA Phone QR</span>
+        </button>
+
         {/* Quick Role Switcher Pill (Great for Pair Programming & Testing all 6 portals) */}
         <div className="relative">
           <button
@@ -216,6 +242,56 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
           )}
         </div>
       </div>
+
+      {/* 2FA Phone QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center relative">
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute right-4 top-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+              <Smartphone className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900">Phone Authentication (2FA)</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Open <b>Google Authenticator</b> or your phone camera to scan your school QR code:
+            </p>
+
+            <div className="my-3.5 p-2 bg-slate-50 rounded-xl border border-slate-200 inline-block shadow-inner">
+              <img
+                src={qrData?.qr_image_url || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                  `otpauth://totp/Charity%20Preparatory%20School:${user?.username || 'admin'}?secret=${qrData?.secret || 'JBSWY3DPEHPK3PXP'}&issuer=Charity%20Preparatory%20School`
+                )}`}
+                alt="2FA QR Code"
+                className="w-44 h-44 mx-auto rounded-lg"
+              />
+            </div>
+
+            <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-left text-[11px] space-y-1">
+              <p><b>Account:</b> {user?.username} ({user?.email})</p>
+              <p><b>Secret Key:</b> <span className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 font-bold text-slate-700">{qrData?.secret || 'JBSWY3DPEHPK3PXP'}</span></p>
+            </div>
+
+            <p className="text-[11px] text-emerald-700 font-medium mt-3 bg-emerald-50 py-1 px-2 rounded-lg border border-emerald-200">
+              ✓ Once scanned, your phone will generate 6-digit codes to log in anytime!
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowQrModal(false)}
+              className="mt-4 w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition"
+            >
+              Done / Close
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
