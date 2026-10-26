@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Charity Preparatory School",
+    "slug": "charity-prep-school",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0F172A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "gh.edu.school.charityprep"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F172A",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "package": "gh.edu.school.charityprep"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
