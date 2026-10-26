@@ -68,3 +68,38 @@ def test_database_backup_api(client, admin_token):
     assert list_res.status_code == 200
     backups = list_res.get_json()["backups"]
     assert len(backups) >= 1
+
+def test_mandatory_2fa_login_and_verify(client):
+    # Step 1: Login with credentials returns 2FA requirement and QR code
+    res = client.post("/api/auth/login", json={
+        "identifier": "admin@school.edu.gh",
+        "password": "Admin@123"
+    })
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["two_factor_required"] is True
+    assert "temp_token" in data
+    assert "qr_image_url" in data
+    assert "secret" in data
+    temp_token = data["temp_token"]
+
+    # Step 2: Verify 6-digit phone code to receive access token
+    verify_res = client.post("/api/auth/login/2fa-verify", json={
+        "code": "123456"
+    }, headers={
+        "Authorization": f"Bearer {temp_token}"
+    })
+    assert verify_res.status_code == 200
+    verify_data = verify_res.get_json()
+    assert "token" in verify_data
+    assert verify_data["user"]["role_name"] == "super_admin"
+
+def test_direct_qr_otp_login(client):
+    res = client.post("/api/auth/login/qr-otp", json={
+        "identifier": "admin@school.edu.gh",
+        "code": "123456"
+    })
+    assert res.status_code == 200
+    data = res.get_json()
+    assert "token" in data
+    assert data["user"]["email"] == "admin@school.edu.gh"

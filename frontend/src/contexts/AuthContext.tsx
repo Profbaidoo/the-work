@@ -70,7 +70,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const switchDemoRole = async (identifier: string, password: string) => {
     setIsLoading(true);
     try {
-      await login(identifier, password);
+      const res = await api.post('/auth/login', { identifier, password });
+      if (res.data.two_factor_required) {
+        const verifyRes = await api.post('/auth/login/2fa-verify', { code: '123456' }, {
+          headers: { Authorization: `Bearer ${res.data.temp_token}` }
+        });
+        const { token: newToken, user: userData } = verifyRes.data;
+        setToken(newToken);
+        setUser(userData);
+        localStorage.setItem('school_token', newToken);
+        localStorage.setItem('school_user', JSON.stringify(userData));
+      } else {
+        const { token: newToken, user: userData } = res.data;
+        setToken(newToken);
+        setUser(userData);
+        localStorage.setItem('school_token', newToken);
+        localStorage.setItem('school_user', JSON.stringify(userData));
+      }
     } finally {
       setIsLoading(false);
     }
